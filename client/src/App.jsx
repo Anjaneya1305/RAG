@@ -4,41 +4,53 @@ import "./App.css";
 function App() {
     const [question, setQuestion] = useState("");
     const [messages, setMessages] = useState([]);
+    const [chats, setChats] = useState([]);
+    const [activeChatId, setActiveChatId] = useState(null);
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [uploadMessage, setUploadMessage] = useState("");
     const [error, setError] = useState("");
+    
 
-    useEffect(() => {
-    const loadChatHistory = async () => {
+   useEffect(() => {
+    const loadChats = async () => {
         try {
             const response = await fetch(
-                "http://localhost:5000/api/chat/history"
+                "http://localhost:5000/api/chat/"
             );
 
             if (!response.ok) {
-                throw new Error("Failed to load chat history");
+                throw new Error("Failed to load chats");
             }
 
             const data = await response.json();
+            
 
-            setMessages(data.messages || []);
+            setChats(data.chats || []);
+
+            if (data.chats && data.chats.length > 0) {
+                setActiveChatId(data.chats[0]._id);
+            }
 
         } catch (error) {
             console.error(
-                "Failed to load chat history:",
+                "Failed to load chats:",
                 error
             );
         }
     };
 
-    loadChatHistory();
+    loadChats();
 }, []);
 
     const askQuestion = async () => {
         if (!question.trim() || loading) {
             return;
         }
+        if (!activeChatId) {
+    setError("Please select a chat first.");
+    return;
+}
 
         const userQuestion = question.trim();
 
@@ -63,7 +75,8 @@ function App() {
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        question: userQuestion
+                        chatId: activeChatId,
+    question: userQuestion
                     })
                 }
             );
@@ -73,6 +86,8 @@ function App() {
             }
 
             const data = await response.json();
+
+            console.log("RAG RESPONSE:", data);
 
             setMessages((previousMessages) => [
                 ...previousMessages,

@@ -5,6 +5,7 @@ require("dotenv").config();
 const connectDB = require("./config/db");
 const documentRoutes = require("./routes/documentRoutes");
 const ragRoutes = require("./routes/ragRoutes");
+const chatRoutes = require("./routes/chatRoutes");
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.use(express.json());
 // Document routes
 app.use("/api/documents", documentRoutes);
 app.use("/api/rag", ragRoutes);
+app.use("/api/chat", chatRoutes);
 // Connect to MongoDB
 connectDB();
 

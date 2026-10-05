@@ -22,7 +22,7 @@ const messageSchema = new mongoose.Schema(
         ]
     },
     {
-        _id: false
+        _id: true
     }
 );
 
@@ -30,10 +30,14 @@ const chatSchema = new mongoose.Schema(
     {
         title: {
             type: String,
-            default: "New Chat"
+            default: "New Chat",
+            trim: true
         },
 
-        messages: [messageSchema]
+        messages: {
+            type: [messageSchema],
+            default: []
+        }
     },
     {
         timestamps: true

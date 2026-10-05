@@ -7,11 +7,26 @@ const router = express.Router();
 
 router.post("/ask", async (req, res) => {
     try {
-        const { question } = req.body;
+        const { chatId, question } = req.body;
+
+        if (!chatId) {
+            return res.status(400).json({
+                message: "Chat ID is required"
+            });
+        }
 
         if (!question) {
             return res.status(400).json({
                 message: "Question is required"
+            });
+        }
+
+        // Find the selected chat
+        const chat = await Chat.findById(chatId);
+
+        if (!chat) {
+            return res.status(404).json({
+                message: "Chat not found"
             });
         }
 
@@ -24,16 +39,6 @@ router.post("/ask", async (req, res) => {
         );
 
         const ragData = response.data;
-
-        // Create a new chat if none exists
-        let chat = await Chat.findOne();
-
-        if (!chat) {
-            chat = await Chat.create({
-                title: question.substring(0, 50),
-                messages: []
-            });
-        }
 
         // Save user question
         chat.messages.push({
@@ -48,10 +53,18 @@ router.post("/ask", async (req, res) => {
             sources: ragData.sources || []
         });
 
+        // Give the chat a useful title
+        if (chat.title === "New Chat") {
+            chat.title = question.substring(0, 50);
+        }
+
         await chat.save();
 
         // Return answer to React
-        res.json(ragData);
+        res.json({
+            ...ragData,
+            chatId: chat._id
+        });
 
     } catch (error) {
 
