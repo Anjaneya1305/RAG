@@ -43,78 +43,7 @@ function App() {
     loadChats();
 }, []);
 
-    const loadChat = async (chatId) => {
-    try {
-        const response = await fetch(
-            `http://localhost:5000/api/chat/${chatId}`
-        );
-
-        if (!response.ok) {
-            throw new Error("Failed to load chat");
-        }
-
-        const data = await response.json();
-
-        setActiveChatId(chatId);
-
-        setMessages(
-            data.chat.messages || []
-        );
-
-        setError("");
-
-    } catch (error) {
-        console.error("Load chat error:", error);
-
-        setError(
-            "Unable to load this chat."
-        );
-    }
-};
-
-
-const createNewChat = async () => {
-    try {
-        const response = await fetch(
-            "http://localhost:5000/api/chat/new",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            }
-        );
-
-        if (!response.ok) {
-            throw new Error("Failed to create chat");
-        }
-
-        const data = await response.json();
-
-        const newChat = data.chat;
-
-        setChats((previousChats) => [
-            newChat,
-            ...previousChats
-        ]);
-
-        setActiveChatId(newChat._id);
-
-        setMessages([]);
-
-        setError("");
-
-    } catch (error) {
-        console.error("Create chat error:", error);
-
-        setError(
-            "Unable to create a new chat."
-        );
-    }
-};
-
-
-const askQuestion = async () => {
+    const askQuestion = async () => {
         if (!question.trim() || loading) {
             return;
         }
@@ -258,38 +187,7 @@ const askQuestion = async () => {
                 )}
             </header>
 
-            <div className="main-layout">
-
-                <aside className="sidebar">
-
-                    <button
-                        className="new-chat-button"
-                        onClick={createNewChat}
-                    >
-                        + New Chat
-                    </button>
-
-                    <div className="chat-list">
-
-                        {chats.map((chat) => (
-                            <button
-                                key={chat._id}
-                                className={
-                                    chat._id === activeChatId
-                                        ? "chat-item active"
-                                        : "chat-item"
-                                }
-                                onClick={() => loadChat(chat._id)}
-                            >
-                                {chat.title}
-                            </button>
-                        ))}
-
-                    </div>
-
-                </aside>
-
-                <main className="chat-container">
+            <main className="chat-container">
 
                 {messages.length === 0 && (
                     <div className="welcome">
@@ -365,8 +263,6 @@ const askQuestion = async () => {
                 )}
 
             </main>
-
-            </div>
 
             <div className="input-area">
                 <div className="input-wrapper">

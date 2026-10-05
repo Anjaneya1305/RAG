@@ -53,10 +53,17 @@ def ask_question(request: QuestionRequest):
         top_k=3
     )
 
-    answer = generate_answer(
-        request.question,
-        results
-    )
+    try:
+        answer = generate_answer(
+            request.question,
+            results
+        )
+
+    except RuntimeError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=str(error)
+        )
 
     sources = []
 

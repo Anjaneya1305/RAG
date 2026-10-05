@@ -74,7 +74,9 @@ router.post("/ask", async (req, res) => {
         );
 
         res.status(500).json({
-            message: "Failed to get answer from RAG service"
+            message: "Failed to get answer from RAG service",
+            error: error.message,
+            details: error.response?.data || null
         });
     }
 });

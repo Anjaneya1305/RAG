@@ -3,7 +3,6 @@ import os
 from dotenv import load_dotenv
 from google import genai
 
-
 load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -12,7 +11,6 @@ if not GEMINI_API_KEY:
     raise ValueError("GEMINI_API_KEY is not configured")
 
 client = genai.Client(api_key=GEMINI_API_KEY)
-
 
 MODEL_NAME = "gemini-3.8-flash"
 
@@ -55,9 +53,31 @@ User Question:
 Provide a clear and concise answer.
 """
 
-    response = client.models.generate_content(
-        model=MODEL_NAME,
-        contents=prompt
-    )
+    try:
 
-    return response.text
+        response = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=prompt
+        )
+
+        return response.text
+
+    except Exception as error:
+
+        error_message = str(error)
+
+        print("Gemini error:", error_message)
+
+        if (
+            "quota" in error_message.lower()
+            or "429" in error_message
+            or "resource_exhausted" in error_message.lower()
+        ):
+            raise RuntimeError(
+                "Gemini API quota has been exceeded. "
+                "Please try again later."
+            )
+
+        raise RuntimeError(
+            "Gemini failed to generate an answer."
+        )

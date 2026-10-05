@@ -49,4 +49,29 @@ router.get("/", async (req, res) => {
 });
 
 
+// Get a single chat with its messages
+router.get("/:id", async (req, res) => {
+    try {
+        const chat = await Chat.findById(req.params.id);
+
+        if (!chat) {
+            return res.status(404).json({
+                message: "Chat not found"
+            });
+        }
+
+        res.json({
+            chat
+        });
+
+    } catch (error) {
+        console.error("Get chat error:", error);
+
+        res.status(500).json({
+            message: "Failed to get chat"
+        });
+    }
+});
+
+
 module.exports = router;
