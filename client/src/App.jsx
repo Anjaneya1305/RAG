@@ -9,10 +9,34 @@ function App() {
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [uploadMessage, setUploadMessage] = useState("");
+const [documents, setDocuments] = useState([]);
     const [error, setError] = useState("");
     
 
    useEffect(() => {
+    const loadDocuments = async () => {
+        try {
+            const response = await fetch(
+                "http://localhost:5000/api/documents"
+            );
+
+            if (!response.ok) {
+                throw new Error("Failed to load documents");
+            }
+
+            const data = await response.json();
+
+            setDocuments(data.documents || []);
+
+        } catch (error) {
+            console.error("Document loading error:", error);
+        }
+    };
+
+    loadDocuments();
+}, []);
+
+useEffect(() => {
     const loadChats = async () => {
         try {
             const response = await fetch(
@@ -43,7 +67,41 @@ function App() {
     loadChats();
 }, []);
 
-    const deleteChat = async (chatId) => {
+    const deleteDocument = async (documentId) => {
+
+    const confirmed = window.confirm(
+        "Are you sure you want to delete this document?"
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            `http://localhost:5000/api/documents/${documentId}`,
+            {
+                method: "DELETE"
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error("Failed to delete document");
+        }
+
+        setDocuments((previousDocuments) =>
+            previousDocuments.filter(
+                (document) => document._id !== documentId
+            )
+        );
+
+    } catch (error) {
+        console.error("Delete document error:", error);
+        setError("Unable to delete this document.");
+    }
+};
+
+const deleteChat = async (chatId) => {
 
     const confirmed = window.confirm(
         "Are you sure you want to delete this chat?"
@@ -372,6 +430,43 @@ const askQuestion = async () => {
                             </button>
                         ))}
 
+                    </div>
+
+                    <div className="sidebar-header documents-header">
+                        <h2>Your Documents</h2>
+                        <span>{documents.length}</span>
+                    </div>
+
+                    <div className="document-list">
+                        {documents.length === 0 ? (
+                            <p className="no-documents">
+                                No documents uploaded
+                            </p>
+                        ) : (
+                            documents.map((document) => (
+                                <div
+                                    className="document-item"
+                                    key={document._id}
+                                >
+                                    <span className="document-icon">
+                                        📄
+                                    </span>
+
+                                    <span className="document-name">
+                                        {document.filename}
+                                    </span>
+
+                                    <span
+                                        className="delete-document"
+                                        onClick={() =>
+                                            deleteDocument(document._id)
+                                        }
+                                    >
+                                        🗑
+                                    </span>
+                                </div>
+                            ))
+                        )}
                     </div>
 
                 </aside>

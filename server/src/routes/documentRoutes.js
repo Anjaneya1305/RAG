@@ -94,4 +94,59 @@ router.post("/upload", upload.single("file"), async (req, res) => {
     }
 });
 
+// Get all uploaded documents
+router.get("/", async (req, res) => {
+    try {
+        const documents = await Document.find()
+            .sort({ createdAt: -1 });
+
+        res.json({
+            documents
+        });
+
+    } catch (error) {
+        console.error("Get documents error:", error);
+
+        res.status(500).json({
+            message: "Failed to get documents"
+        });
+    }
+});
+
+// Delete an uploaded document
+router.delete("/:id", async (req, res) => {
+    try {
+        const document = await Document.findById(req.params.id);
+
+        if (!document) {
+            return res.status(404).json({
+                message: "Document not found"
+            });
+        }
+
+        await Document.findByIdAndDelete(req.params.id);
+
+        const filePath = path.join(
+            __dirname,
+            "../../",
+            document.filePath
+        );
+
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
+
+        res.json({
+            message: "Document deleted successfully"
+        });
+
+    } catch (error) {
+        console.error("Delete document error:", error);
+
+        res.status(500).json({
+            message: "Failed to delete document"
+        });
+    }
+});
+
 module.exports = router;
