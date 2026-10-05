@@ -4,8 +4,9 @@ const axios = require("axios");
 const Chat = require("../models/Chat");
 
 const router = express.Router();
+const authMiddleware = require("../middleware/authMiddleware");
 
-router.post("/ask", async (req, res) => {
+router.post("/ask", authMiddleware, async (req, res) => {
     try {
         const { chatId, question } = req.body;
 

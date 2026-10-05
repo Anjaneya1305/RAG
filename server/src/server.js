@@ -6,6 +6,7 @@ const connectDB = require("./config/db");
 const documentRoutes = require("./routes/documentRoutes");
 const ragRoutes = require("./routes/ragRoutes");
 const chatRoutes = require("./routes/chatRoutes");
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use("/api/documents", documentRoutes);
 app.use("/api/rag", ragRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/auth", authRoutes);
 // Connect to MongoDB
 connectDB();
 

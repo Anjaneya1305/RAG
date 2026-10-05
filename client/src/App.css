@@ -290,7 +290,7 @@ input {
   opacity: 1;
 }
 
-EOFcat >> client/src/App.css <<'EOF'
+
 
 .delete-chat {
   margin-left: auto;

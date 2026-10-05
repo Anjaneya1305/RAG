@@ -1,7 +1,18 @@
 import { useEffect,useState } from "react";
+import Login from "./Login";
 import "./App.css";
 
 function App() {
+    const token = localStorage.getItem("token");
+
+    const [user, setUser] = useState(() => {
+        const savedUser = localStorage.getItem("user");
+
+        return savedUser
+            ? JSON.parse(savedUser)
+            : null;
+    });
+
     const [question, setQuestion] = useState("");
     const [messages, setMessages] = useState([]);
     const [chats, setChats] = useState([]);
@@ -11,13 +22,20 @@ function App() {
     const [uploadMessage, setUploadMessage] = useState("");
 const [documents, setDocuments] = useState([]);
     const [error, setError] = useState("");
+
+
     
 
    useEffect(() => {
     const loadDocuments = async () => {
         try {
             const response = await fetch(
-                "http://localhost:5000/api/documents"
+                "http://localhost:5000/api/documents",
+                {
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                }
             );
 
             if (!response.ok) {
@@ -40,7 +58,12 @@ useEffect(() => {
     const loadChats = async () => {
         try {
             const response = await fetch(
-                "http://localhost:5000/api/chat/"
+                "http://localhost:5000/api/chat/",
+                {
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                }
             );
 
             if (!response.ok) {
@@ -81,7 +104,10 @@ useEffect(() => {
         const response = await fetch(
             `http://localhost:5000/api/documents/${documentId}`,
             {
-                method: "DELETE"
+                method: "DELETE",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
             }
         );
 
@@ -115,7 +141,10 @@ const deleteChat = async (chatId) => {
         const response = await fetch(
             `http://localhost:5000/api/chat/${chatId}`,
             {
-                method: "DELETE"
+                method: "DELETE",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
             }
         );
 
@@ -268,7 +297,8 @@ const askQuestion = async () => {
                 {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
                     },
                     body: JSON.stringify({
                         chatId: activeChatId,
@@ -325,6 +355,9 @@ const askQuestion = async () => {
                 "http://localhost:5000/api/documents/upload",
                 {
                     method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    },
                     body: formData
                 }
             );
@@ -354,6 +387,10 @@ const askQuestion = async () => {
             askQuestion();
         }
     };
+
+    if (!user) {
+        return <Login onLogin={setUser} />;
+    }
 
     return (
         <div className="app">

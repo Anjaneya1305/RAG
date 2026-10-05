@@ -6,6 +6,7 @@ const fs = require("fs");
 const Document = require("../models/Document");
 
 const router = express.Router();
+const authMiddleware = require("../middleware/authMiddleware");
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -95,7 +96,7 @@ router.post("/upload", upload.single("file"), async (req, res) => {
 });
 
 // Get all uploaded documents
-router.get("/", async (req, res) => {
+router.get("/", authMiddleware, async (req, res) => {
     try {
         const documents = await Document.find()
             .sort({ createdAt: -1 });
@@ -114,7 +115,7 @@ router.get("/", async (req, res) => {
 });
 
 // Delete an uploaded document
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authMiddleware, async (req, res) => {
     try {
         const document = await Document.findById(req.params.id);
 

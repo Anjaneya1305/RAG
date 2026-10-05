@@ -3,10 +3,11 @@ const express = require("express");
 const Chat = require("../models/Chat");
 
 const router = express.Router();
+const authMiddleware = require("../middleware/authMiddleware");
 
 
 // Create a new chat
-router.post("/new", async (req, res) => {
+router.post("/new", authMiddleware, async (req, res) => {
     try {
         const chat = await Chat.create({
             title: "New Chat",
@@ -29,7 +30,7 @@ router.post("/new", async (req, res) => {
 
 
 // Get all chats
-router.get("/", async (req, res) => {
+router.get("/", authMiddleware, async (req, res) => {
     try {
         const chats = await Chat.find()
             .sort({ updatedAt: -1 })
@@ -50,7 +51,7 @@ router.get("/", async (req, res) => {
 
 
 // Get a single chat with its messages
-router.get("/:id", async (req, res) => {
+router.get("/:id", authMiddleware, async (req, res) => {
     try {
         const chat = await Chat.findById(req.params.id);
 
@@ -75,7 +76,7 @@ router.get("/:id", async (req, res) => {
 
 
 /* Delete a chat */
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authMiddleware, async (req, res) => {
     try {
         const chat = await Chat.findByIdAndDelete(req.params.id);
 
