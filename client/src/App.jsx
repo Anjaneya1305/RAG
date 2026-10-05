@@ -43,7 +43,74 @@ function App() {
     loadChats();
 }, []);
 
-    const loadChat = async (chatId) => {
+    const deleteChat = async (chatId) => {
+
+    const confirmed = window.confirm(
+        "Are you sure you want to delete this chat?"
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            `http://localhost:5000/api/chat/${chatId}`,
+            {
+                method: "DELETE"
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error("Failed to delete chat");
+        }
+
+        const remainingChats = chats.filter(
+            (chat) => chat._id !== chatId
+        );
+
+        setChats(remainingChats);
+
+        if (activeChatId === chatId) {
+
+            if (remainingChats.length > 0) {
+
+                const nextChat = remainingChats[0];
+
+                setActiveChatId(nextChat._id);
+
+                const chatResponse = await fetch(
+                    `http://localhost:5000/api/chat/${nextChat._id}`
+                );
+
+                if (chatResponse.ok) {
+                    const data = await chatResponse.json();
+
+                    setMessages(
+                        data.chat.messages || []
+                    );
+                }
+
+            } else {
+
+                setActiveChatId(null);
+                setMessages([]);
+            }
+        }
+
+        setError("");
+
+    } catch (error) {
+        console.error("Delete chat error:", error);
+
+        setError(
+            "Unable to delete this chat."
+        );
+    }
+};
+
+
+const loadChat = async (chatId) => {
     try {
         const response = await fetch(
             `http://localhost:5000/api/chat/${chatId}`
@@ -262,6 +329,11 @@ const askQuestion = async () => {
 
                 <aside className="sidebar">
 
+                    <div className="sidebar-header">
+                        <h2>Conversations</h2>
+                        <span>{chats.length}</span>
+                    </div>
+
                     <button
                         className="new-chat-button"
                         onClick={createNewChat}
@@ -281,7 +353,22 @@ const askQuestion = async () => {
                                 }
                                 onClick={() => loadChat(chat._id)}
                             >
-                                {chat.title}
+                                <span className="chat-indicator">
+                                    {chat._id === activeChatId ? "●" : "○"}
+                                </span>
+                                <span className="chat-title">
+                                    {chat.title}
+                                </span>
+
+                                <span
+                                    className="delete-chat"
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        deleteChat(chat._id);
+                                    }}
+                                >
+                                    🗑
+                                </span>
                             </button>
                         ))}
 
