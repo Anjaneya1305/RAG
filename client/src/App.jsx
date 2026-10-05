@@ -229,40 +229,53 @@ const loadChat = async (chatId) => {
 
 const createNewChat = async () => {
     try {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            setError("Please sign in again.");
+            return;
+        }
+
         const response = await fetch(
             "http://localhost:5000/api/chat/new",
             {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json"
-                }
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({})
             }
         );
 
-        if (!response.ok) {
-            throw new Error("Failed to create chat");
-        }
-
         const data = await response.json();
 
-        const newChat = data.chat;
+        if (!response.ok) {
+            console.error(
+                "Create chat API error:",
+                response.status,
+                data
+            );
+
+            throw new Error(
+                data.message || `Failed to create chat (${response.status})`
+            );
+        }
 
         setChats((previousChats) => [
-            newChat,
+            data.chat,
             ...previousChats
         ]);
 
-        setActiveChatId(newChat._id);
-
+        setActiveChatId(data.chat._id);
         setMessages([]);
-
         setError("");
 
     } catch (error) {
         console.error("Create chat error:", error);
 
         setError(
-            "Unable to create a new chat."
+            error.message || "Unable to create a new chat."
         );
     }
 };

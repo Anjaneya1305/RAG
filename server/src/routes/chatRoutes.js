@@ -1,15 +1,14 @@
 const express = require("express");
-
 const Chat = require("../models/Chat");
-
-const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
 
+const router = express.Router();
 
-// Create a new chat
+/* Create a new chat */
 router.post("/new", authMiddleware, async (req, res) => {
     try {
         const chat = await Chat.create({
+            user: req.user.userId,
             title: "New Chat",
             messages: []
         });
@@ -23,16 +22,18 @@ router.post("/new", authMiddleware, async (req, res) => {
         console.error("Create chat error:", error);
 
         res.status(500).json({
-            message: "Failed to create new chat"
+            message: "Failed to create chat"
         });
     }
 });
 
 
-// Get all chats
+/* Get all chats for logged-in user */
 router.get("/", authMiddleware, async (req, res) => {
     try {
-        const chats = await Chat.find()
+        const chats = await Chat.find({
+            user: req.user.userId
+        })
             .sort({ updatedAt: -1 })
             .select("_id title createdAt updatedAt");
 
@@ -50,10 +51,13 @@ router.get("/", authMiddleware, async (req, res) => {
 });
 
 
-// Get a single chat with its messages
+/* Get one chat for logged-in user */
 router.get("/:id", authMiddleware, async (req, res) => {
     try {
-        const chat = await Chat.findById(req.params.id);
+        const chat = await Chat.findOne({
+            _id: req.params.id,
+            user: req.user.userId
+        });
 
         if (!chat) {
             return res.status(404).json({
@@ -75,16 +79,21 @@ router.get("/:id", authMiddleware, async (req, res) => {
 });
 
 
-/* Delete a chat */
+/* Delete a chat for logged-in user */
 router.delete("/:id", authMiddleware, async (req, res) => {
     try {
-        const chat = await Chat.findByIdAndDelete(req.params.id);
+        const chat = await Chat.findOne({
+            _id: req.params.id,
+            user: req.user.userId
+        });
 
         if (!chat) {
             return res.status(404).json({
                 message: "Chat not found"
             });
         }
+
+        await Chat.findByIdAndDelete(req.params.id);
 
         res.json({
             message: "Chat deleted successfully"

@@ -78,5 +78,10 @@
     "filename": "test_rag.pdf",
     "page": 1,
     "text": "Enterprise RAG Python Test\nThis document is used to test PDF text extraction."
+  },
+  {
+    "filename": "test_rag.pdf",
+    "page": 1,
+    "text": "Enterprise RAG Python Test\nThis document is used to test PDF text extraction."
   }
 ]
