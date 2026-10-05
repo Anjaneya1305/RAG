@@ -152,3 +152,7 @@ node_modules/
 venv/
 __pycache__/
 *.pyc
+
+# Uploaded documents
+server/uploads/
+rag-service/uploads/

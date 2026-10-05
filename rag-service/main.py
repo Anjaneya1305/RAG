@@ -1,9 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from pydantic import BaseModel
+import os
+import shutil
 
 from services.vector_store import VectorStore
 from services.retrieval_service import retrieve_relevant_chunks
 from services.llm_service import generate_answer
+from services.ingestion_service import ingest_pdf
 
 
 app = FastAPI(
@@ -44,20 +47,17 @@ def health():
 @app.post("/ask")
 def ask_question(request: QuestionRequest):
 
-    # Retrieve relevant chunks
     results = retrieve_relevant_chunks(
         request.question,
         vector_store,
         top_k=3
     )
 
-    # Generate answer
     answer = generate_answer(
         request.question,
         results
     )
 
-    # Return sources
     sources = []
 
     for result in results:
@@ -74,3 +74,48 @@ def ask_question(request: QuestionRequest):
         "answer": answer,
         "sources": sources
     }
+
+
+@app.post("/upload")
+async def upload_document(file: UploadFile = File(...)):
+
+    if file.content_type != "application/pdf":
+        raise HTTPException(
+            status_code=400,
+            detail="Only PDF files are allowed"
+        )
+
+    os.makedirs("uploads", exist_ok=True)
+
+    file_path = os.path.join(
+        "uploads",
+        file.filename
+    )
+
+    try:
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        result = ingest_pdf(
+            file_path,
+            file.filename,
+            vector_store
+        )
+
+        vector_store.save()
+
+        return {
+            "message": "PDF uploaded and indexed successfully",
+            "document": result
+        }
+
+    except Exception as error:
+        print("Upload error:", error)
+
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to process PDF"
+        )
+
+    finally:
+        file.file.close()
