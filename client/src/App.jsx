@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect,useState } from "react";
 import "./App.css";
 
 function App() {
@@ -8,6 +8,32 @@ function App() {
     const [uploading, setUploading] = useState(false);
     const [uploadMessage, setUploadMessage] = useState("");
     const [error, setError] = useState("");
+
+    useEffect(() => {
+    const loadChatHistory = async () => {
+        try {
+            const response = await fetch(
+                "http://localhost:5000/api/chat/history"
+            );
+
+            if (!response.ok) {
+                throw new Error("Failed to load chat history");
+            }
+
+            const data = await response.json();
+
+            setMessages(data.messages || []);
+
+        } catch (error) {
+            console.error(
+                "Failed to load chat history:",
+                error
+            );
+        }
+    };
+
+    loadChatHistory();
+}, []);
 
     const askQuestion = async () => {
         if (!question.trim() || loading) {

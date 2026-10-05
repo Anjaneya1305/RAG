@@ -16,7 +16,8 @@ const messageSchema = new mongoose.Schema(
         sources: [
             {
                 filename: String,
-                page: Number
+                page: Number,
+                score: Number
             }
         ]
     },
@@ -27,12 +28,6 @@ const messageSchema = new mongoose.Schema(
 
 const chatSchema = new mongoose.Schema(
     {
-        userId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: true
-        },
-
         title: {
             type: String,
             default: "New Chat"
