@@ -425,6 +425,15 @@ const askQuestion = async () => {
         }
     };
 
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        setUser(null);
+        setMessages([]);
+        setChats([]);
+        setActiveChatId(null);
+    };
+
     if (!user) {
         return <Login onLogin={setUser} />;
     }
@@ -433,24 +442,28 @@ const askQuestion = async () => {
         <div className="app">
 
             <header className="header">
-                <h1>Enterprise RAG Knowledge Assistant</h1>
+                <div className="header-top">
+                    <div>
+                        <h1>Enterprise RAG Knowledge Assistant</h1>
 
-                <p>
-                    Ask questions about your enterprise documents
-                </p>
+                        <p>
+                            Ask questions about your enterprise documents
+                        </p>
+                    </div>
 
-                <label>
-                    <input
-                        type="file"
-                        accept=".pdf,application/pdf"
-                        onChange={uploadPDF}
-                        disabled={uploading}
-                    />
+                    <div className="account-area">
+                        <span>
+                            {user.name}
+                        </span>
 
-                    {uploading
-                        ? "Uploading..."
-                        : "Upload PDF"}
-                </label>
+                        <button
+                            className="logout-button"
+                            onClick={handleLogout}
+                        >
+                            Logout
+                        </button>
+                    </div>
+                </div>
 
                 {uploadMessage && (
                     <p>{uploadMessage}</p>
@@ -636,19 +649,34 @@ const askQuestion = async () => {
             <div className="input-area">
                 <div className="input-wrapper">
 
-                    <input
-                        className="question-input"
-                        type="text"
-                        value={question}
-                        onChange={(event) =>
-                            setQuestion(event.target.value)
-                        }
-                        onKeyDown={handleKeyDown}
-                        placeholder="Ask a question about your documents..."
-                        disabled={loading}
-                    />
+    <div className="question-area">
 
-                    <button
+                        <label className="upload-button">
+                            <input
+                                type="file"
+                                accept=".pdf,application/pdf"
+                                onChange={uploadPDF}
+                                disabled={uploading}
+                            />
+
+                            {uploading
+                                ? "Uploading..."
+                                : "📄 Upload PDF"}
+                        </label>
+
+                        <input
+                            className="question-input"
+                            type="text"
+                            value={question}
+                            onChange={(event) =>
+                                setQuestion(event.target.value)
+                            }
+                            onKeyDown={handleKeyDown}
+                            placeholder="Ask a question about your documents..."
+                            disabled={loading}
+                        />
+
+                        <button
                         className="ask-button"
                         onClick={askQuestion}
                         disabled={
@@ -659,9 +687,10 @@ const askQuestion = async () => {
                         {loading ? "Thinking..." : "Ask"}
                     </button>
 
+                    </div>
+
                 </div>
             </div>
-
         </div>
     );
 }
