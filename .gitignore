@@ -156,3 +156,4 @@ __pycache__/
 # Uploaded documents
 server/uploads/
 rag-service/uploads/
+rag-service/data/
