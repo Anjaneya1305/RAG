@@ -615,8 +615,12 @@ const askQuestion = async () => {
                 )}
 
                 {error && (
-                    <div className="error">
-                        {error}
+                    <div className="error error-banner">
+                        <span className="error-icon">⚠</span>
+                        <div className="error-content">
+                            <strong>Something went wrong</strong>
+                            <span>{error}</span>
+                        </div>
                     </div>
                 )}
 
