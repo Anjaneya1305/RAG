@@ -1,4 +1,5 @@
 import os
+import time
 
 from dotenv import load_dotenv
 from google import genai
@@ -15,69 +16,72 @@ client = genai.Client(api_key=GEMINI_API_KEY)
 MODEL_NAME = "gemini-3.8-flash"
 
 
-def generate_answer(question: str, retrieved_chunks: list[dict]) -> str:
-    """
-    Generate an answer using Gemini and the chunks retrieved by FAISS.
-    """
+def generate_answer(question, results):
 
     context_parts = []
 
-    for chunk in retrieved_chunks:
-        document = chunk["document"]
+    for result in results:
+        document = result["document"]
 
         context_parts.append(
-            f"Source: {document['filename']}, "
+            f"Source: {document['filename']}\n"
             f"Page: {document['page']}\n"
-            f"{document['text']}"
+            f"Content:\n{document['text']}"
         )
 
-    context = "\n\n".join(context_parts)
+    context = "\n\n---\n\n".join(context_parts)
 
     prompt = f"""
 You are an enterprise knowledge assistant.
 
-Answer the user's question using ONLY the information
-provided in the context below.
+Answer the user's question using only the provided document context.
 
-Do not invent information.
+If the answer cannot be found in the context, say that the information
+is not available in the provided documents.
 
-If the answer cannot be found in the context, say:
-"I could not find the answer in the provided documents."
-
-Context:
-{context}
-
-User Question:
+User question:
 {question}
 
-Provide a clear and concise answer.
+Document context:
+{context}
 """
 
-    try:
+    max_retries = 3
 
-        response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=prompt
-        )
-
-        return response.text
-
-    except Exception as error:
-
-        error_message = str(error)
-
-        print("Gemini error:", error_message)
-
-        if (
-            "quota" in error_message.lower()
-            or "429" in error_message
-            or "resource_exhausted" in error_message.lower()
-        ):
-            raise RuntimeError(
-                "Gemini API quota has been exceeded. "
-                "Please try again later."
+    for attempt in range(max_retries):
+        try:
+            response = client.models.generate_content(
+                model=MODEL_NAME,
+                contents=prompt
             )
 
-        raise RuntimeError(
-            "Gemini failed to generate an answer."
-        )
+            return response.text
+
+        except Exception as error:
+
+            error_text = str(error)
+
+            print(
+                f"Gemini attempt {attempt + 1}/{max_retries} failed: "
+                f"{error_text}"
+            )
+
+            if "503" not in error_text and "UNAVAILABLE" not in error_text:
+                raise RuntimeError(
+                    f"Gemini request failed: {error_text}"
+                )
+
+            if attempt < max_retries - 1:
+                wait_time = 3 * (attempt + 1)
+
+                print(
+                    f"Gemini temporarily unavailable. "
+                    f"Retrying in {wait_time} seconds..."
+                )
+
+                time.sleep(wait_time)
+
+    raise RuntimeError(
+        "Gemini is temporarily unavailable after multiple retries. "
+        "Please try again shortly."
+    )

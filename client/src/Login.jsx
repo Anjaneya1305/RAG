@@ -14,7 +14,7 @@ function Login({ onLogin }) {
 
         try {
             const response = await fetch(
-                "http://localhost:5000/api/auth/login",
+                "https://musical-meme-7v55wvw79wrwfx5rw-5000.app.github.dev/api/auth/login",
                 {
                     method: "POST",
                     headers: {

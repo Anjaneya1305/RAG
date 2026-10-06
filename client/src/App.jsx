@@ -30,7 +30,7 @@ const [documents, setDocuments] = useState([]);
     const loadDocuments = async () => {
         try {
             const response = await fetch(
-                "http://localhost:5000/api/documents",
+                "https://musical-meme-7v55wvw79wrwfx5rw-5000.app.github.dev/api/documents",
                 {
                     headers: {
                         "Authorization": `Bearer ${token}`
@@ -58,7 +58,7 @@ useEffect(() => {
     const loadChats = async () => {
         try {
             const response = await fetch(
-                "http://localhost:5000/api/chat/",
+                "https://musical-meme-7v55wvw79wrwfx5rw-5000.app.github.dev/api/chat/",
                 {
                     headers: {
                         "Authorization": `Bearer ${token}`
@@ -102,7 +102,7 @@ useEffect(() => {
 
     try {
         const response = await fetch(
-            `http://localhost:5000/api/documents/${documentId}`,
+            `https://musical-meme-7v55wvw79wrwfx5rw-5000.app.github.dev/api/documents/${documentId}`,
             {
                 method: "DELETE",
                 headers: {
@@ -139,7 +139,7 @@ const deleteChat = async (chatId) => {
 
     try {
         const response = await fetch(
-            `http://localhost:5000/api/chat/${chatId}`,
+            `https://musical-meme-7v55wvw79wrwfx5rw-5000.app.github.dev/api/chat/${chatId}`,
             {
                 method: "DELETE",
                 headers: {
@@ -167,7 +167,7 @@ const deleteChat = async (chatId) => {
                 setActiveChatId(nextChat._id);
 
                 const chatResponse = await fetch(
-                    `http://localhost:5000/api/chat/${nextChat._id}`
+                    `https://musical-meme-7v55wvw79wrwfx5rw-5000.app.github.dev/api/chat/${nextChat._id}`
                 );
 
                 if (chatResponse.ok) {
@@ -199,29 +199,46 @@ const deleteChat = async (chatId) => {
 
 const loadChat = async (chatId) => {
     try {
-        const response = await fetch(
-            `http://localhost:5000/api/chat/${chatId}`
-        );
+        const token = localStorage.getItem("token");
 
-        if (!response.ok) {
-            throw new Error("Failed to load chat");
+        if (!token) {
+            setError("Please sign in again.");
+            return;
         }
+
+        const response = await fetch(
+            `https://musical-meme-7v55wvw79wrwfx5rw-5000.app.github.dev/api/chat/${chatId}`,
+            {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            }
+        );
 
         const data = await response.json();
 
+        if (!response.ok) {
+            console.error(
+                "Load chat API error:",
+                response.status,
+                data
+            );
+
+            throw new Error(
+                data.message || `Failed to load chat (${response.status})`
+            );
+        }
+
         setActiveChatId(chatId);
-
-        setMessages(
-            data.chat.messages || []
-        );
-
+        setMessages(data.chat.messages || []);
         setError("");
 
     } catch (error) {
         console.error("Load chat error:", error);
 
         setError(
-            "Unable to load this chat."
+            error.message || "Unable to load this chat."
         );
     }
 };
@@ -237,7 +254,7 @@ const createNewChat = async () => {
         }
 
         const response = await fetch(
-            "http://localhost:5000/api/chat/new",
+            "https://musical-meme-7v55wvw79wrwfx5rw-5000.app.github.dev/api/chat/new",
             {
                 method: "POST",
                 headers: {
@@ -306,7 +323,7 @@ const askQuestion = async () => {
 
         try {
             const response = await fetch(
-                "http://localhost:5000/api/rag/ask",
+                "https://musical-meme-7v55wvw79wrwfx5rw-5000.app.github.dev/api/rag/ask",
                 {
                     method: "POST",
                     headers: {
@@ -365,7 +382,7 @@ const askQuestion = async () => {
 
         try {
             const response = await fetch(
-                "http://localhost:5000/api/documents/upload",
+                "https://musical-meme-7v55wvw79wrwfx5rw-5000.app.github.dev/api/documents/upload",
                 {
                     method: "POST",
                     headers: {
