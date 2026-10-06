@@ -721,3 +721,45 @@ input {
     min-width: 0;
 }
 
+
+/* Responsive question area */
+@media (max-width: 700px) {
+    .question-area {
+        gap: 8px;
+    }
+
+    .upload-button {
+        padding: 12px 10px;
+        font-size: 12px;
+    }
+
+    .question-area .question-input {
+        min-width: 0;
+        font-size: 13px;
+    }
+
+    .question-area .ask-button {
+        padding: 12px 14px;
+    }
+}
+
+@media (max-width: 520px) {
+    .question-area {
+        flex-wrap: wrap;
+    }
+
+    .upload-button {
+        order: 1;
+    }
+
+    .question-area .question-input {
+        order: 2;
+        flex: 1;
+        min-width: 180px;
+    }
+
+    .question-area .ask-button {
+        order: 3;
+    }
+}
+
