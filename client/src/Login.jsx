@@ -1,29 +1,42 @@
 import { useState } from "react";
 
 function Login({ onLogin }) {
+    const [mode, setMode] = useState("login");
+
+    const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+
     const [error, setError] = useState("");
+    const [success, setSuccess] = useState("");
     const [loading, setLoading] = useState(false);
 
-    const handleLogin = async (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
 
         setError("");
+        setSuccess("");
         setLoading(true);
 
         try {
+            const endpoint =
+                mode === "login"
+                    ? "/api/auth/login"
+                    : "/api/auth/register";
+
+            const body =
+                mode === "login"
+                    ? { email, password }
+                    : { name, email, password };
+
             const response = await fetch(
-                "https://musical-meme-7v55wvw79wrwfx5rw-5000.app.github.dev/api/auth/login",
+                `https://musical-meme-7v55wvw79wrwfx5rw-5000.app.github.dev${endpoint}`,
                 {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
                     },
-                    body: JSON.stringify({
-                        email,
-                        password
-                    })
+                    body: JSON.stringify(body)
                 }
             );
 
@@ -31,21 +44,30 @@ function Login({ onLogin }) {
 
             if (!response.ok) {
                 throw new Error(
-                    data.message || "Login failed"
+                    data.message ||
+                    (mode === "login"
+                        ? "Login failed"
+                        : "Registration failed")
                 );
             }
 
-            localStorage.setItem(
-                "token",
-                data.token
-            );
+            if (mode === "login") {
+                localStorage.setItem("token", data.token);
+                localStorage.setItem(
+                    "user",
+                    JSON.stringify(data.user)
+                );
 
-            localStorage.setItem(
-                "user",
-                JSON.stringify(data.user)
-            );
+                onLogin(data.user);
+            } else {
+                setSuccess(
+                    "Account created successfully. You can now sign in."
+                );
 
-            onLogin(data.user);
+                setMode("login");
+                setName("");
+                setPassword("");
+            }
 
         } catch (error) {
             setError(error.message);
@@ -61,10 +83,24 @@ function Login({ onLogin }) {
                 <h1>Enterprise RAG</h1>
 
                 <p className="login-subtitle">
-                    Sign in to your Knowledge Assistant
+                    {mode === "login"
+                        ? "Sign in to your Knowledge Assistant"
+                        : "Create your Knowledge Assistant account"}
                 </p>
 
-                <form onSubmit={handleLogin}>
+                <form onSubmit={handleSubmit}>
+
+                    {mode === "register" && (
+                        <input
+                            type="text"
+                            placeholder="Full Name"
+                            value={name}
+                            onChange={(event) =>
+                                setName(event.target.value)
+                            }
+                            required
+                        />
+                    )}
 
                     <input
                         type="email"
@@ -92,14 +128,58 @@ function Login({ onLogin }) {
                         </p>
                     )}
 
+                    {success && (
+                        <p className="login-success">
+                            {success}
+                        </p>
+                    )}
+
                     <button
                         type="submit"
                         disabled={loading}
                     >
-                        {loading ? "Signing in..." : "Sign In"}
+                        {loading
+                            ? mode === "login"
+                                ? "Signing in..."
+                                : "Creating account..."
+                            : mode === "login"
+                                ? "Sign In"
+                                : "Create Account"}
                     </button>
 
                 </form>
+
+                <div className="auth-switch">
+                    {mode === "login" ? (
+                        <>
+                            <span>Don't have an account?</span>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setMode("register");
+                                    setError("");
+                                    setSuccess("");
+                                }}
+                            >
+                                Sign Up
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <span>Already have an account?</span>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setMode("login");
+                                    setError("");
+                                    setSuccess("");
+                                }}
+                            >
+                                Sign In
+                            </button>
+                        </>
+                    )}
+                </div>
 
             </div>
         </div>
