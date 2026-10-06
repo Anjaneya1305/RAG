@@ -304,3 +304,32 @@ input {
   opacity: 1;
 }
 
+
+.error-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 16px 20px;
+    padding: 12px 16px;
+    border-radius: 10px;
+}
+
+.error-icon {
+    font-size: 18px;
+    line-height: 1.2;
+}
+
+.error-content {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.error-content strong {
+    font-size: 14px;
+}
+
+.error-content span {
+    font-size: 13px;
+}
+
