@@ -572,7 +572,12 @@ const askQuestion = async () => {
                                 {message.content}
                             </div>
                         ) : (
-                            <div>
+                            <div className="assistant-response">
+                                <div className="assistant-label">
+                                    <span className="assistant-icon">✦</span>
+                                    <span>Knowledge Assistant</span>
+                                </div>
+
                                 <div className="assistant-bubble">
                                     {message.content}
                                 </div>

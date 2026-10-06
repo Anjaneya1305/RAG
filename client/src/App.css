@@ -333,3 +333,70 @@ input {
     font-size: 13px;
 }
 
+
+.assistant-response {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.assistant-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0.75;
+}
+
+.assistant-icon {
+    font-size: 15px;
+}
+
+
+.sources {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+.sources-title {
+    font-weight: 600;
+    margin-bottom: 6px;
+    opacity: 0.8;
+}
+
+.source {
+    padding: 4px 0;
+    opacity: 0.75;
+}
+
+
+.assistant-response {
+    max-width: 80%;
+}
+
+.assistant-bubble {
+    max-width: 100%;
+}
+
+
+.assistant-bubble {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+
+.header h1 {
+    color: #111827;
+}
+
+.welcome h2 {
+    color: #111827;
+}
+
+.welcome p {
+    color: #6b7280;
+}
+
