@@ -2,9 +2,9 @@ const express = require("express");
 const axios = require("axios");
 
 const Chat = require("../models/Chat");
+const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
-const authMiddleware = require("../middleware/authMiddleware");
 
 router.post("/ask", authMiddleware, async (req, res) => {
     try {
@@ -22,8 +22,11 @@ router.post("/ask", authMiddleware, async (req, res) => {
             });
         }
 
-        // Find the selected chat
-        const chat = await Chat.findById(chatId);
+        // Find chat belonging to the logged-in user
+        const chat = await Chat.findOne({
+            _id: chatId,
+            user: req.user.userId
+        });
 
         if (!chat) {
             return res.status(404).json({
@@ -32,14 +35,38 @@ router.post("/ask", authMiddleware, async (req, res) => {
         }
 
         // Send question to Python RAG service
-        const response = await axios.post(
-            "http://localhost:8000/ask",
-            {
-                question: question
-            }
-        );
+        let ragData;
 
-        const ragData = response.data;
+        try {
+            const response = await axios.post(
+                "http://localhost:8000/ask",
+                {
+                    question
+                },
+                {
+                    timeout: 120000
+                }
+            );
+
+            ragData = response.data;
+
+        } catch (ragError) {
+            console.error(
+                "RAG service request failed:",
+                ragError.response?.status,
+                ragError.response?.data ||
+                ragError.message
+            );
+
+            const ragMessage =
+                ragError.response?.data?.detail ||
+                ragError.response?.data?.message ||
+                "AI service is currently unavailable. Please try again later.";
+
+            return res.status(502).json({
+                message: ragMessage
+            });
+        }
 
         // Save user question
         chat.messages.push({
@@ -68,16 +95,14 @@ router.post("/ask", authMiddleware, async (req, res) => {
         });
 
     } catch (error) {
-
         console.error(
-            "RAG service error:",
-            error.response?.data || error.message
+            "RAG route error:",
+            error
         );
 
         res.status(500).json({
-            message: "Failed to get answer from RAG service",
-            error: error.message,
-            details: error.response?.data || null
+            message: "Failed to process RAG request",
+            error: error.message
         });
     }
 });

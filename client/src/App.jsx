@@ -338,7 +338,14 @@ const askQuestion = async () => {
             );
 
             if (!response.ok) {
-                throw new Error("Failed to get answer");
+                const errorData = await response.json().catch(() => ({}));
+
+                throw new Error(
+                    errorData.message ||
+                    errorData.details?.detail ||
+                    errorData.details ||
+                    `RAG service failed (${response.status})`
+                );
             }
 
             const data = await response.json();
@@ -355,7 +362,7 @@ const askQuestion = async () => {
             ]);
         } catch (error) {
             console.error(error);
-            setError("Unable to get an answer. Please try again.");
+            setError(error.message || "Unable to get an answer. Please try again.");
         } finally {
             setLoading(false);
         }

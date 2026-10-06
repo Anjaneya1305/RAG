@@ -31,7 +31,10 @@ def ingest_pdf(file_path: str, filename: str, vector_store: VectorStore):
 
     embeddings = generate_embeddings(texts)
 
-    # 4. Add embeddings + metadata to FAISS
+    # 4. Clear the previous index before indexing the new PDF
+    vector_store.reset()
+
+    # 5. Add embeddings + metadata to FAISS
     vector_store.add_documents(
         embeddings,
         documents

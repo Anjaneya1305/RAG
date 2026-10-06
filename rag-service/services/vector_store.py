@@ -27,6 +27,13 @@ class VectorStore:
         self.index.add(vectors)
         self.documents.extend(documents)
 
+    def reset(self):
+        """
+        Clear all indexed documents and embeddings.
+        """
+        self.index = faiss.IndexFlatIP(EMBEDDING_DIMENSION)
+        self.documents = []
+
     def search(self, query_embedding, top_k=3):
         """
         Search for the most relevant documents.

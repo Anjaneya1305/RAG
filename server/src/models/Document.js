@@ -2,9 +2,16 @@ const mongoose = require("mongoose");
 
 const documentSchema = new mongoose.Schema(
     {
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true
+        },
+
         filename: {
             type: String,
-            required: true
+            required: true,
+            trim: true
         },
 
         filePath: {
@@ -12,15 +19,9 @@ const documentSchema = new mongoose.Schema(
             required: true
         },
 
-        uploadedBy: {
-            type: String,
-            required: true
-        },
-
-        status: {
-            type: String,
-            enum: ["uploaded", "processing", "completed", "failed"],
-            default: "uploaded"
+        uploadedAt: {
+            type: Date,
+            default: Date.now
         }
     },
     {

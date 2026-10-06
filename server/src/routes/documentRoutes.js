@@ -1,105 +1,28 @@
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
 const multer = require("multer");
 const axios = require("axios");
-const fs = require("fs");
+const FormData = require("form-data");
 
 const Document = require("../models/Document");
-
-const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, "uploads/");
-    },
-
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + "-" + file.originalname);
-    }
-});
+const router = express.Router();
 
 const upload = multer({
-    storage: storage,
-    fileFilter: (req, file, cb) => {
-        if (file.mimetype === "application/pdf") {
-            cb(null, true);
-        } else {
-            cb(new Error("Only PDF files are allowed"));
-        }
-    }
+    dest: "uploads/"
 });
 
-router.post("/upload", upload.single("file"), async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({
-                message: "No PDF file uploaded"
-            });
-        }
 
-        const document = await Document.create({
-            filename: req.file.originalname,
-            filePath: req.file.path,
-            uploadedBy: "test-user",
-            status: "processing"
-        });
-
-        const formData = new FormData();
-
-        const fileBuffer = fs.readFileSync(req.file.path);
-
-        formData.append(
-            "file",
-            new Blob([fileBuffer], {
-                type: "application/pdf"
-            }),
-            req.file.originalname
-        );
-
-        const response = await axios.post(
-            "http://localhost:8000/upload",
-            formData,
-        );
-
-        document.status = "completed";
-        await document.save();
-
-        res.status(201).json({
-            message: "PDF uploaded and indexed successfully",
-            document: document,
-            rag: response.data
-        });
-
-    } catch (error) {
-
-        console.error(
-            "Document upload error:",
-            error.response?.data || error.message
-        );
-
-        if (req.file) {
-            try {
-                fs.unlinkSync(req.file.path);
-            } catch (deleteError) {
-                console.error(
-                    "Failed to delete uploaded file:",
-                    deleteError.message
-                );
-            }
-        }
-
-        res.status(500).json({
-            message: "Failed to upload and process PDF",
-            error: error.response?.data?.detail || error.message
-        });
-    }
-});
-
-// Get all uploaded documents
+/* Get documents for logged-in user */
 router.get("/", authMiddleware, async (req, res) => {
     try {
-        const documents = await Document.find()
-            .sort({ createdAt: -1 });
+        const documents = await Document.find({
+            user: req.user.userId
+        }).sort({
+            createdAt: -1
+        });
 
         res.json({
             documents
@@ -114,40 +37,152 @@ router.get("/", authMiddleware, async (req, res) => {
     }
 });
 
-// Delete an uploaded document
-router.delete("/:id", authMiddleware, async (req, res) => {
-    try {
-        const document = await Document.findById(req.params.id);
 
-        if (!document) {
-            return res.status(404).json({
-                message: "Document not found"
+/* Upload document */
+router.post(
+    "/upload",
+    authMiddleware,
+    upload.single("file"),
+    async (req, res) => {
+        try {
+            if (!req.file) {
+                return res.status(400).json({
+                    message: "No file uploaded"
+                });
+            }
+
+            if (req.file.mimetype !== "application/pdf") {
+                fs.unlinkSync(req.file.path);
+
+                return res.status(400).json({
+                    message: "Only PDF files are allowed"
+                });
+            }
+
+            const document = await Document.create({
+                user: req.user.userId,
+                filename: req.file.originalname,
+                filePath: req.file.path
+            });
+
+            try {
+                const formData = new FormData();
+
+                formData.append(
+                    "file",
+                    fs.createReadStream(req.file.path),
+                    {
+                        filename: req.file.originalname,
+                        contentType: "application/pdf"
+                    }
+                );
+
+                const ragResponse = await axios.post(
+                    "http://localhost:8000/upload",
+                    formData,
+                    {
+                        headers: formData.getHeaders(),
+                        maxContentLength: Infinity,
+                        maxBodyLength: Infinity
+                    }
+                );
+
+                console.log(
+                    "RAG upload response:",
+                    ragResponse.data
+                );
+            } catch (ragError) {
+                console.error(
+                    "RAG upload error:",
+                    ragError.response?.data ||
+                    ragError.message
+                );
+
+                await Document.findByIdAndDelete(
+                    document._id
+                );
+
+                if (fs.existsSync(req.file.path)) {
+                    fs.unlinkSync(req.file.path);
+                }
+
+                return res.status(500).json({
+                    message:
+                        "Document uploaded but RAG indexing failed"
+                });
+            }
+
+            res.status(201).json({
+                message:
+                    "Document uploaded successfully",
+                document
+            });
+
+        } catch (error) {
+            console.error(
+                "Upload document error:",
+                error
+            );
+
+            if (req.file?.path && fs.existsSync(req.file.path)) {
+                fs.unlinkSync(req.file.path);
+            }
+
+            res.status(500).json({
+                message: "Failed to upload document"
             });
         }
-
-        await Document.findByIdAndDelete(req.params.id);
-
-        const filePath = path.join(
-            __dirname,
-            "../../",
-            document.filePath
-        );
-
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-        }
-
-        res.json({
-            message: "Document deleted successfully"
-        });
-
-    } catch (error) {
-        console.error("Delete document error:", error);
-
-        res.status(500).json({
-            message: "Failed to delete document"
-        });
     }
-});
+);
+
+
+/* Delete document for logged-in user */
+router.delete(
+    "/:id",
+    authMiddleware,
+    async (req, res) => {
+        try {
+            const document = await Document.findOne({
+                _id: req.params.id,
+                user: req.user.userId
+            });
+
+            if (!document) {
+                return res.status(404).json({
+                    message: "Document not found"
+                });
+            }
+
+            await Document.findByIdAndDelete(
+                document._id
+            );
+
+            const filePath = path.resolve(
+                document.filePath
+            );
+
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+
+            res.json({
+                message:
+                    "Document deleted successfully"
+            });
+
+        } catch (error) {
+            console.error(
+                "Delete document error:",
+                error
+            );
+
+            res.status(500).json({
+                message:
+                    "Failed to delete document"
+            });
+        }
+    }
+);
+
 
 module.exports = router;

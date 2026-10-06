@@ -66,10 +66,34 @@ Document context:
                 f"{error_text}"
             )
 
+            # Hide provider-specific quota details from the user.
+            if (
+                "429" in error_text
+                or "RESOURCE_EXHAUSTED" in error_text
+                or "quota" in error_text.lower()
+                or "retryDelay" in error_text
+            ):
+                raise RuntimeError(
+                    "AI service temporarily unavailable. "
+                    "The current AI usage limit has been reached. "
+                    "Please try again later."
+                )
+
             if "503" not in error_text and "UNAVAILABLE" not in error_text:
                 raise RuntimeError(
-                    f"Gemini request failed: {error_text}"
+                    "AI service is currently unavailable. "
+                    "Please try again later."
                 )
+
+            if attempt < max_retries - 1:
+                wait_time = 3 * (attempt + 1)
+
+                print(
+                    f"Gemini temporarily unavailable. "
+                    f"Retrying in {wait_time} seconds..."
+                )
+
+                time.sleep(wait_time)
 
             if attempt < max_retries - 1:
                 wait_time = 3 * (attempt + 1)
